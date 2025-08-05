@@ -1,67 +1,257 @@
-BigQuery FastMCP ServerThis project provides a robust server for interacting with Google BigQuery using the FastMCP library. It leverages Server-Sent Events (SSE) for communication, offering a modern, scalable, and web-friendly alternative to traditional stdio-based MCP servers. It also includes a sophisticated multi-agent system built with the Google Agent Development Kit (ADK) for intelligent task routing and execution.🚀 OverviewThe core of this project is a Python server that exposes various BigQuery functionalities as tools that can be called remotely. By using FastMCP with SSE, it's designed for easy integration into web applications, enabling real-time, concurrent connections for data discovery and analytics.Key Improvements over traditional MCP servers:HTTP-Based Transport: Uses standard, firewall-friendly SSE instead of stdin/stdout.Scalable by Design: Built to handle multiple simultaneous client connections.Web-Friendly: Simplifies integration with any web front-end or service.Real-Time Streaming: SSE allows for live data streaming from the server to the client.✨ Key DifferencesThe FastMCP approach significantly simplifies the server's code and architecture.Traditional stdio Implementation# Complex asynchronous setup
-async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-    await server.run(read_stream, write_stream, ...)
+# BigQuery FastMCP Server
 
-# Manual tool registration and handling
-@server.list_tools()
-async def handle_list_tools() -> list[types.Tool]:
-    return [types.Tool(name="execute-query", ...)]
+A FastMCP-powered BigQuery server implementation that provides intelligent data discovery and analytics capabilities through specialized AI agents. This package includes both standalone FastMCP server functionality and ADK Web Interface compatibility.
 
-@server.call_tool()
-async def handle_call_tool(name: str, arguments: dict):
-    if name == "execute-query":
-        # Logic to execute the tool
-Modern FastMCP Implementation# Simple, declarative server setup
-mcp = FastMCP("BigQuery_FastMCP_Server")
+## Features
 
-# Automatic tool registration with function decorators
+- **Multi-Agent Architecture**: Specialized agents for data discovery and analytics
+- **FastMCP Integration**: Modern HTTP/SSE transport for scalable web applications
+- **ADK Web Compatibility**: Works seamlessly with Google ADK Web Interface
+- **BigQuery Operations**: Full support for querying, schema discovery, and dataset management
+- **Sample Data Creation**: Built-in tools for creating test datasets and sample data
+
+## Architecture
+
+### Agent System
+
+The package implements a multi-agent orchestration system:
+
+1. **Orchestrator Agent**: Routes user requests to appropriate specialized agents
+2. **Data Discovery Agent**: Handles schema exploration, data cataloging, and structure analysis
+3. **Data Analytics Agent**: Performs statistical analysis, business intelligence, and insights generation
+
+### Transport Options
+
+- **FastMCP Server** (`server.py`): HTTP/SSE transport for standalone web applications
+- **ADK Compatible Agent** (`agent.py`): stdio-based transport for ADK Web Interface integration
+
+## Installation
+
+1. **Clone the repository and install dependencies:**
+```bash
+pip install fastmcp google-cloud-bigquery python-dotenv google-adk
+```
+
+2. **Set up environment variables in `.env` file:**
+```env
+BIGQUERY_PROJECT=your-project-id
+BIGQUERY_LOCATION=your-location  # e.g., asia-south1, US
+BIGQUERY_KEY_FILE=/path/to/service-account-key.json  # Optional
+```
+
+3. **Configure BigQuery Authentication:**
+   - **Option 1**: Use service account key file (set `BIGQUERY_KEY_FILE`)
+   - **Option 2**: Use Application Default Credentials (ADC)
+   - **Option 3**: Use gcloud authentication
+
+## Usage
+
+### ADK Web Interface (Recommended)
+
+For use with Google ADK Web Interface, the agent is automatically configured:
+
+```python
+from bigquery_fastmcp import agent
+
+# The root_agent is ready to use with ADK Web Interface
+# It automatically handles routing between discovery and analytics agents
+```
+
+The ADK agent provides:
+- Intelligent request routing between specialized agents
+- Comprehensive BigQuery operations
+- Web-optimized performance and error handling
+
+### Standalone FastMCP Server
+
+For standalone web applications or direct HTTP/SSE access:
+
+```bash
+# Start the FastMCP server
+python bigquery_fastmcp/server.py --project YOUR_PROJECT --location YOUR_LOCATION --port 8001
+
+# Server runs on http://127.0.0.1:8001 by default
+# SSE endpoint available at http://127.0.0.1:8001/sse/
+```
+
+**Server Options:**
+```bash
+python server.py --help
+
+optional arguments:
+  --project PROJECT     BigQuery project ID
+  --location LOCATION   BigQuery location (default: US)
+  --key-file KEY_FILE   Path to service account key file
+  --host HOST           Host to run server on (default: localhost)
+  --port PORT           Port to run server on (default: 8001)
+```
+
+## Available Tools
+
+### Data Discovery Tools
+- `list-tables`: Discover all available tables across datasets
+- `describe-table`: Get detailed schema information for specific tables
+- `create-dataset`: Create new BigQuery datasets
+- `create-sample-tables`: Create structured sample tables for testing
+
+### Analytics Tools
+- `execute-query`: Run SQL queries for analysis and insights
+- `insert-sample-data`: Populate tables with test data
+- `create-complete-sample`: Create complete sample environment (dataset + tables + data)
+
+## Agent Capabilities
+
+### Data Discovery Agent
+Specializes in:
+- **Data Catalog Management**: Systematic exploration of available datasets and tables
+- **Schema Analysis**: Deep dive into table structures, column types, and constraints
+- **Data Profiling**: Analysis of data distribution and quality assessment
+- **Relationship Discovery**: Finding connections between tables
+- **Metadata Extraction**: Comprehensive documentation of data assets
+
+**Example Queries:**
+- "What tables are available in the project?"
+- "Describe the schema of the customers table"
+- "Show me the structure of the sales dataset"
+
+### Data Analytics Agent
+Specializes in:
+- **Statistical Analysis**: Comprehensive statistical analysis and distributions
+- **Business Intelligence**: KPI calculations and business metrics
+- **Trend Analysis**: Pattern identification and anomaly detection
+- **Comparative Analysis**: Segment and period comparisons
+- **Data Aggregation**: Meaningful summaries for decision making
+
+**Example Queries:**
+- "Analyze sales trends over the last quarter"
+- "What is the average order value by region?"
+- "Compare user engagement between different cohorts"
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `BIGQUERY_PROJECT` | BigQuery project ID | None | Yes |
+| `BIGQUERY_LOCATION` | BigQuery location/region | `US` | No |
+| `BIGQUERY_KEY_FILE` | Service account key file path | None | No |
+| `HOST` | Server host (FastMCP only) | `localhost` | No |
+| `PORT` | Server port (FastMCP only) | `8001` | No |
+
+### BigQuery Authentication
+
+The server supports multiple authentication methods:
+
+1. **Service Account Key File** (Recommended for production):
+   ```env
+   BIGQUERY_KEY_FILE=/path/to/service-account-key.json
+   ```
+
+2. **Application Default Credentials**:
+   ```bash
+   gcloud auth application-default login
+   ```
+
+3. **Compute Engine/Cloud Shell**: Automatically uses attached service account
+
+## Sample Data Creation
+
+The server includes utilities for creating sample datasets for testing:
+
+```python
+# Create a complete sample environment
+create_complete_sample("test_dataset", "asia-south1")
+```
+
+This creates:
+- A new BigQuery dataset
+- Sample `departments` and `employees` tables
+- Populated with 10 departments and 50 employees
+
+## Logging
+
+The FastMCP server logs to both stdout and file:
+- **Log file**: `mcp_bigquery_fastmcp_server.log`
+- **Log level**: DEBUG (configurable)
+- **Log format**: Timestamp, logger name, level, message
+
+## Error Handling
+
+The package includes comprehensive error handling for:
+- BigQuery authentication failures
+- Invalid queries and malformed SQL
+- Network connectivity issues
+- Missing or invalid configuration
+- Table/dataset access permissions
+
+## Development
+
+### Project Structure
+```
+bigquery_fastmcp/
+├── __init__.py          # Package initialization
+├── agent.py             # ADK Web Interface compatible agent
+├── server.py            # FastMCP HTTP/SSE server
+├── config.py            # Configuration management
+└── README.md            # This file
+```
+
+### Extending the Server
+
+To add new tools, modify `server.py`:
+
+```python
 @mcp.tool()
-def execute_query(query: str) -> str:
-    """Execute a SELECT query on the BigQuery database"""
-    # Tool implementation is the function body
+def your_new_tool(param: str) -> str:
+    """Description of your new tool"""
+    # Implementation here
+    return result
+```
 
-# Single command to start the server
-mcp.run(transport="sse", host="127.0.0.1", port=8001)
-🤖 Agent Implementation (ADK)The agent.py script implements a multi-agent system using the Google Agent Development Kit (ADK). This system intelligently routes user queries to the appropriate specialized agent.Orchestrator Agent: The main entry point that analyzes the user's request and delegates it to one of the sub-agents.Data Discovery Agent: Specializes in tasks related to schema exploration, data cataloging, and structure analysis. It uses tools like list-tables and describe-table.Data Analytics Agent: Focuses on statistical analysis, business intelligence, and extracting insights from data. It primarily uses the execute-query tool.# agent.py
-# Root agent that delegates tasks
-root_agent = LlmAgent(
-    name="orchestrator",
-    model="gemini-2.0-flash",
-    instruction=BIGQUERY_PROMPT,
-    sub_agents=[
-        data_discovery_agent,
-        data_analytics_agent,
-    ]
-)
-🌐 ADK Web InterfaceThis agent setup is designed for compatibility with the ADK Web Interface. The agents connect to the running FastMCP server to utilize its tools, effectively bridging the conversational AI front-end with the powerful BigQuery back-end.🛠️ Available ToolsThe server comes with a comprehensive set of tools for managing and querying BigQuery:execute_query(query: str): Executes a SQL SELECT query.list_tables(): Lists all available tables in the project.describe_table(table_name: str): Retrieves the schema for a specified table.create_dataset(dataset_name: str, location: str): Creates a new dataset.create_sample_tables(dataset_name: str): Creates sample departments and employees tables.insert_sample_data(dataset_name: str): Populates the sample tables with data.create_complete_sample(dataset_name: str, location: str): A utility function that creates a dataset, sample tables, and inserts data in one call.⚙️ UsageConfigurationSet up your BigQuery connection using a .env file in the root directory.Note: The server port is set to 8001 to avoid conflicts with the ADK Web Interface, which typically uses port 8000.# .env
-BIGQUERY_PROJECT="your-gcp-project-id"
-BIGQUERY_LOCATION="your-bigquery-location" # e.g., "US" or "asia-south1"
-BIGQUERY_KEY_FILE="/path/to/your/service-account.json" # Optional
-HOST="127.0.0.1"
-PORT="8001"
-Starting the ServerYou can run the server directly from the command line, overriding .env variables if needed.# Basic startup using .env config
-python server.py
+## Troubleshooting
 
-# Override config with command-line arguments
-python server.py \
-  --project "your-gcp-project-id" \
-  --location "asia-south1" \
-  --key-file "/path/to/service-account.json" \
-  --host "127.0.0.1" \
-  --port 8001
-Server EndpointsOnce running, the server exposes the following endpoints:SSE Endpoint: http://127.0.0.1:8001/sse (for MCP client connections)Health Check: http://127.0.0.1:8001/health (returns server status)Client ConnectionConnect to the server using any MCP client that supports the SSE transport.from mcp import Client
+### Common Issues
 
-# Connect to the FastMCP server
-client = Client("sse://127.0.0.1:8001/sse")
+1. **Authentication Errors**:
+   - Verify service account key file path
+   - Check that service account has BigQuery permissions
+   - Try `gcloud auth application-default login`
 
-# Example: List all tables
-result = client.tools.list_tables()
-print(result)
-📦 DevelopmentAdding new functionality is straightforward. Simply define a new function in server.py and decorate it with @mcp.tool(). FastMCP handles the rest.@mcp.tool()
-def my_new_tool(param1: str, param2: int) -> str:
-    """
-    This is the description for the new tool.
-    It will be automatically exposed by the server.
-    """
-    # Your tool's logic here
-    return f"Received {param1} and {param2}"
+2. **Connection Issues**:
+   - Verify project ID is correct
+   - Check network connectivity to BigQuery
+   - Ensure location/region is valid
+
+3. **Permission Errors**:
+   - Verify service account has required BigQuery roles:
+     - `BigQuery Data Editor`
+     - `BigQuery Job User`
+     - `BigQuery Data Viewer`
+
+### Debugging
+
+Enable detailed logging by setting the log level:
+```python
+import logging
+logging.getLogger('mcp_bigquery_fastmcp_server').setLevel(logging.DEBUG)
+```
+
+## License
+
+This project is licensed under the MIT License.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## Support
+
+For issues and questions:
+- Check the troubleshooting section above
+- Review BigQuery documentation
+- File an issue in the repository
